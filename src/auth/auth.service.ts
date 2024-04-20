@@ -19,11 +19,26 @@ export class AuthService {
     async login(dto: AuthDto) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...user} = await this.validateUser(dto)
-        const token = this.issueTokens(user.id)
+        const tokens = this.issueTokens(user.id)
 
         return {
             user,
-            ...token
+            ...tokens
+        }
+    }
+
+    async getNewTokens(refreshToken: string) {
+        const result = await this.jwt.verifyAsync(refreshToken)
+        if(!result) throw new UnauthorizedException('Invalid refresh token')
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password, ...user } = await this.userService.getById(result.id)
+
+        const tokens = this.issueTokens(user.id)
+
+        return {
+            user,
+            ...tokens
         }
     }
 
@@ -66,7 +81,7 @@ export class AuthService {
 
     }
 
-    addRefreshOTokenToResponse(res: Response, refreshToken: string){
+    addRefreshTokenToResponse(res: Response, refreshToken: string){
         const expiresIn = new Date()
         expiresIn.setDate(expiresIn.getDate() + this.EXPIRE_DAY_REFRESH_TOKEN)
 
@@ -80,8 +95,8 @@ export class AuthService {
         })
     }
 
-    removeRefreshOTokenToResponse(res: Response, refreshToken: string){
-        res.cookie(this.REFRESH_TOKEN_NAME, refreshToken, {
+    removeRefreshTokenToResponse(res: Response){
+        res.cookie(this.REFRESH_TOKEN_NAME, '', {
             httpOnly: true,
             domain: 'localhost',
             expires: new Date(0),
