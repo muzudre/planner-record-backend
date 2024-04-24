@@ -6,24 +6,42 @@ import { TaskDto } from './task.dto';
 export class TaskService {
   constructor(private prisma: PrismaService) {}
 
-  getById(id: string){
-    return this.prisma.task.findUnique({
-      where:{
-        id
-      },
-      include: {
-        tasks: true
+  async getAll(userId: string) {
+    return this.prisma.task.findMany({
+      where: {
+        userId
       }
     })
   }
 
-  async create(dto: TaskDto){
-
+  async create(dto: TaskDto, userId: string) {
     return this.prisma.task.create({
+      data: {
+        ...dto,
+        user: {
+          connect: {
+            id: userId
+          }
+        }
+      }
+    })
+  }
+
+  async update(dto: Partial<TaskDto>, taskId: string, userId: string) {
+    return this.prisma.task.update({
+      where: {
+        userId,
+        id: taskId
+      },
       data: dto
     })
   }
 
-  async update(id: string, dto: TaskDto){
+  async delete(taskId: string) {
+    return this.prisma.task.delete({
+      where: {
+        id: taskId
+      }
+    })
   }
 }
