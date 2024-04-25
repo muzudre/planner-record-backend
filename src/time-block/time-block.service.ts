@@ -10,6 +10,9 @@ export class TimeBlockService {
     return this.prisma.timeBlock.findMany({
       where: {
         userId
+      },
+      orderBy: {
+        order: 'asc'
       }
     })
   }
@@ -37,11 +40,23 @@ export class TimeBlockService {
     })
   }
 
-  async delete(timeBlockId: string) {
+  async delete(timeBlockId: string, userId: string) {
     return this.prisma.timeBlock.delete({
       where: {
-        id: timeBlockId
+        id: timeBlockId,
+        userId
       }
     })
+  }
+
+  async updateOrder(ids: string[]) {
+    return this.prisma.$transaction(
+      ids.map((id, order) => 
+        this.prisma.timeBlock.update({
+          where: { id },
+          data: { order }
+        })
+      )
+    )
   }
 }

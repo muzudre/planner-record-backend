@@ -3,6 +3,7 @@ import { TimeBlockService } from './time-block.service';
 import { Auth } from 'src/auth/decorator/auth.decorator';
 import { CurrentUser } from 'src/auth/decorator/user.decorator';
 import { TimeBlockDto } from './dto/time-block.dto';
+import { UpdateOrderDto } from './dto/update-order.dto';
 
 @Controller('user/time-blocks')
 export class TimeBlockController {
@@ -24,16 +25,24 @@ export class TimeBlockController {
 
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
+  @Put('update-order')
+  @Auth()
+  async updateOrder(@Body() updateOrderDto: UpdateOrderDto) {
+    return this.timeBlockService.updateOrder(updateOrderDto.ids)
+  }
+
+  @UsePipes(new ValidationPipe())
+  @HttpCode(200)
   @Put(':id')
   @Auth()
   async update(@Body() dto: TimeBlockDto, @CurrentUser('id') userId: string, @Param('id') id: string) {
-    return this.timeBlockService.update(dto, id,userId)
+    return this.timeBlockService.update(dto, id, userId)
   }
 
   @HttpCode(200)
   @Delete(':id')
   @Auth()
-  async delete(@Param('id') id: string) {
-    return this.timeBlockService.delete(id)
+  async delete(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.timeBlockService.delete(id, userId)
   }
 }
