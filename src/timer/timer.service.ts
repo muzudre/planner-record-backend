@@ -11,7 +11,7 @@ export class TimerService {
 
     return this.prisma.timerSession.findFirst({
       where: {
-        createAt: {
+        createdAt: {
           gte: new Date(today)
         },
         userId
@@ -57,7 +57,7 @@ export class TimerService {
           }
         }
       },
-      includes: {
+      include: {
         rounds: true
       }
     })
