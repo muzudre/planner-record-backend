@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
+import { TimerSessionDto } from './timer.dto';
 
 @Injectable()
 export class TimerService {
@@ -21,6 +22,75 @@ export class TimerService {
             id: 'desc'
           }
         }
+      }
+    })
+  }
+
+  async create(userId: string) {
+    const todaySession = await this.getTodaySession(userId)
+
+    if(todaySession) return todaySession
+
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId
+      },
+      select: {
+        intervalCount: true
+      }
+    })
+
+    if(!user) throw new NotFoundException('User not found')
+
+    return this.prisma.timerSession.create({
+      data: {
+        rounds: {
+          createMany: {
+            data:  Array.from({ length: user.intervalCount },  () => ({
+              totalSeconds: 0
+            }))
+          }
+        },
+        user: {
+          connect: {
+            id: userId
+          }
+        }
+      },
+      includes: {
+        rounds: true
+      }
+    })
+  }
+
+  async update(
+    dto: Partial<TimerSessionDto>,
+    timerId: string,
+    userId: string
+  ) {
+    return this.prisma.timerSession.update({
+      where: {
+        userId,
+        id: timerId
+      },
+      data: dto
+    })
+  }
+
+  async updateRound( dto: Partial<TimerSessionDto>, roundId: string) {
+    return this.prisma.timerRound.update({
+      where: {
+        id: roundId
+      },
+      data: dto
+    })
+  }
+
+  async deleteSession(sessionId: string, userId: string) {
+    return this.prisma.timerSession.delete({
+      where: {
+        id: sessionId,
+        userId
       }
     })
   }
